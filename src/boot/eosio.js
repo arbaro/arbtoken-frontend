@@ -28,7 +28,17 @@ const scatter = new Scatter([myChain], { appName });
 
 export default ({ Vue }) => {
   Vue.use(Eos, {
-    eosStore: new Eos.Store([myChain], appName, [scatter], Vue, Notify, openURL)
+    eosStore: new Eos.Store(
+      [myChain],
+      appName,
+      [scatter],
+      Vue,
+      Notify,
+      openURL
+    ),
+    extras: {
+      defaultContract: "arbtoken"
+    }
   });
 
   Vue.prototype.$rpc = rpc;

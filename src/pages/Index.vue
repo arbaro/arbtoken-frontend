@@ -10,7 +10,7 @@
             v-model="issuerField"
             label="Issuer"
             hint="Account which can mint new tokens"
-            :rules="[isEosioName]"
+            :rules="[this.$eos.isName]"
             :lazy-rules="true"
             placeholder="Issuer account"
             error-message="Must be a valid EOS account name"
@@ -64,7 +64,7 @@
 
           <q-card-actions>
             <q-btn flat @click="aboutPrompt = true">About</q-btn>
-            <q-btn flat @click="donatePrompt = true">Donate</q-btn>
+            <q-btn flat @click="donateTrigger">Donate</q-btn>
             <q-btn flat @click="refresh">Refresh</q-btn>
           </q-card-actions>
         </q-card>
@@ -97,12 +97,14 @@
       </div>
     </div>
 
-    <q-page-sticky
-      v-if="$eos.data.authed"
-      position="bottom-right"
-      :offset="[18, 18]"
-    >
-      <q-btn fab icon="add" color="primary" @click="initPrompt" />
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-btn
+        :disable="!$eosio.data.authed"
+        fab
+        icon="add"
+        color="primary"
+        @click="initPrompt"
+      />
     </q-page-sticky>
   </q-page>
 </template>
@@ -118,7 +120,7 @@ export default {
     return {
       about: "Create your own token on EOS with Dividend functionality.",
       tokens: [],
-      trackedTokens: ["EUF", "VBM", "BTC"],
+      trackedTokens: [],
       tokenPrompt: false,
       issuerField: "",
       symbolField: "",
@@ -127,6 +129,7 @@ export default {
     };
   },
   created: async function() {
+    await this.fetchTrackableTokens();
     await this.fetchTokens();
   },
   computed: {
@@ -137,19 +140,23 @@ export default {
     }
   },
   methods: {
+    async donateTrigger() {
+      await this.$eos.transfer("johnn.y", "1.0000 EOS");
+    },
     isPrecision() {
       return this.precisionField >= 0 && this.precisionField <= 8;
     },
-    isEosioName(input) {
-      return (
-        new RegExp("^[a-z][a-z1-5.]{0,10}([a-z1-5]|^.)[a-j1-5]?$").test(
-          input
-        ) ||
-        "Name must only contain characters a-z 1-5 and . No greater than 12 in length."
-      );
-    },
     async refresh() {
+      await this.fetchTrackableTokens();
       await this.fetchTokens();
+    },
+    async fetchTrackableTokens() {
+      const result = await this.$rpc.get_table_by_scope({
+        code: HARDCODED_CONTRACT_NAME,
+        table: "stat"
+      });
+      const scopes = result.rows.map(x => x.scope);
+      this.trackedTokens = scopes;
     },
     async fetchTokens() {
       this.tokens = [];
@@ -164,7 +171,7 @@ export default {
           });
           this.tokens = [
             ...this.tokens,
-            { ...result.rows[0], symbol: tempTokens[i] }
+            { ...result.rows[0], symbol: result.rows[0].supply.split(" ")[1] }
           ];
         } catch (e) {
           console.log("Error", e);
@@ -172,34 +179,17 @@ export default {
       }
     },
     async initPrompt() {
-      if (this.issuerField == "" && this.$eos.data.accountName) {
-        this.issuerField = this.$eos.data.accountName;
+      if (this.issuerField == "" && this.$eosio.data.accountName) {
+        this.issuerField = this.$eosio.data.accountName;
       }
       this.tokenPrompt = true;
     },
     async createToken() {
-      console.log("trying", {
+      await this.$eos.tx("create", {
         issuer: this.issuerField,
-        max_supply: this.draftedToken
+        maximum_supply: this.draftedToken
       });
-      await this.$eos.tx({
-        actions: [
-          {
-            account: HARDCODED_CONTRACT_NAME,
-            name: "create",
-            authorization: [
-              {
-                actor: this.$eos.data.accountName,
-                permission: "active"
-              }
-            ],
-            data: {
-              issuer: this.issuerField,
-              maximum_supply: this.draftedToken
-            }
-          }
-        ]
-      });
+      await this.refresh(1000);
     }
   }
 };

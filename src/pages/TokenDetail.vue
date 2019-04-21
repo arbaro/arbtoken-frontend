@@ -15,7 +15,6 @@
             label="Dividend Amount"
           />
         </q-card-section>
-
         <q-card-actions align="right" class="text-primary">
           <q-btn flat label="Cancel" v-close-popup />
           <q-btn
@@ -37,7 +36,7 @@
           <q-input
             v-model="recipient"
             label="To"
-            :rules="[isEosioName]"
+            :rules="[this.$eos.isName]"
             :lazy-rules="true"
             placeholder="Recipient account"
             error-message="Must be a valid EOS account name"
@@ -75,7 +74,7 @@
           <q-input
             v-model="issueRecipient"
             label="To"
-            :rules="[isEosioName]"
+            :rules="[this.$eos.isName]"
             :lazy-rules="true"
             placeholder="Recipient account"
             error-message="Must be a valid EOS account name"
@@ -124,7 +123,7 @@
           <q-card-actions>
             <q-btn
               flat
-              v-if="issuer == $eos.data.accountName"
+              v-if="issuer == $eosio.data.accountName"
               @click="issuePrompt = true"
               >Issue</q-btn
             >
@@ -223,125 +222,57 @@ export default {
   },
   methods: {
     async issue() {
-      await this.$eos.tx({
-        actions: [
-          {
-            account: HARDCODED_CONTRACT_NAME,
-            name: "issue",
-            authorization: [
-              {
-                actor: this.$eos.data.accountName,
-                permission: "active"
-              }
-            ],
-            data: {
-              to: this.issueRecipient,
-              quantity: `${Number(this.issueAmount).toFixed(4)} ${
-                this.$route.params.id
-              }`,
-              memo: this.issueMemo
-            }
-          }
-        ]
+      await this.$eos.tx("issue", {
+        to: this.issueRecipient,
+        quantity: `${Number(this.issueAmount).toFixed(4)} ${
+          this.$route.params.id
+        }`,
+        memo: this.issueMemo
       });
+      await this.refresh(1000);
     },
     async transfer() {
       try {
-        await this.$eos.tx({
-          actions: [
-            {
-              account: HARDCODED_CONTRACT_NAME,
-              name: "transfer",
-              authorization: [
-                {
-                  actor: this.$eos.data.accountName,
-                  permission: "active"
-                }
-              ],
-              data: {
-                from: this.$eos.data.accountName,
-                to: this.recipient,
-                quantity: `${Number(this.transferAmount).toFixed(4)} ${
-                  this.$route.params.id
-                }`,
-                memo: this.memo
-              }
-            }
-          ]
-        });
+        await this.$eos.transfer(
+          this.recipient,
+          `${Number(this.transferAmount).toFixed(4)} ${this.$route.params.id}`,
+          this.memo,
+          HARDCODED_CONTRACT_NAME
+        );
       } catch (e) {
         console.log("s");
       }
     },
     async issueDividend() {
       try {
-        await this.$eos.tx({
-          actions: [
-            {
-              account: "eosio.token",
-              name: "transfer",
-              authorization: [
-                {
-                  actor: this.$eos.data.accountName,
-                  permission: "active"
-                }
-              ],
-              data: {
-                from: this.$eos.data.accountName,
-                to: HARDCODED_CONTRACT_NAME,
-                quantity: `${Number(this.dividendAmount).toFixed(4)} EOS`,
-                memo: `${this.$route.params.id}:4`
-              }
-            }
-          ]
-        });
-        await wait(1000);
-        await this.refresh();
+        await this.$eos.transfer(
+          HARDCODED_CONTRACT_NAME,
+          `${Number(this.dividendAmount).toFixed(4)} EOS`,
+          `${this.$route.params.id}:4`
+        );
+        await this.refresh(1000);
       } catch (e) {
         console.log(e);
       }
     },
-    async claim(owner) {
+    async claim(owner, refresh = true) {
       try {
-        const beforeBalanceObj = await this.$rpc.get_table_rows({
-          code: "eosio.token",
-          scope: owner,
-          table: "accounts"
+        const beforeBalance = await this.$eos.getBalance(owner);
+        await this.$eos.tx("claim", {
+          owner,
+          tokensym: `4,${this.$route.params.id}`
         });
-        const beforeBalance = parseTokenString(beforeBalanceObj.rows[0].balance)
-          .amount;
-        await this.$eos.tx({
-          actions: [
-            {
-              account: HARDCODED_CONTRACT_NAME,
-              name: "claim",
-              authorization: [
-                {
-                  actor: this.$eos.data.accountName,
-                  permission: "active"
-                }
-              ],
-              data: {
-                owner,
-                tokensym: `4,${this.$route.params.id}`
-              }
-            }
-          ]
-        });
-        const afterBalanceObj = await this.$rpc.get_table_rows({
-          code: "eosio.token",
-          scope: owner,
-          table: "accounts"
-        });
-        const afterBalance = parseTokenString(afterBalanceObj.rows[0].balance)
-          .amount;
+        const afterBalance = await this.$eos.getBalance(owner);
         const difference = (afterBalance - beforeBalance).toFixed(4);
+
         this.$q.notify({
           message: `${owner} awarded ${difference} EOS`,
           position: "bottom-right",
-          //   color: "negative",
           icon: "attach_money"
         });
+        if (refresh) {
+          this.refresh(1000);
+        }
       } catch (e) {
         console.log(e);
       }
@@ -351,29 +282,19 @@ export default {
         x => parseTokenString(x.awaitingReward).amount
       );
       for (var i = 0; i < availableClaims.length; i++) {
-        await this.claim(availableClaims[i].holder);
+        await this.claim(availableClaims[i].holder, false);
       }
-      await wait(1000);
-      await this.refresh();
+      await this.refresh(1000);
     },
-    calc(x) {
-      console.log(x);
-      return "hello";
-    },
-    async refresh() {
+    async refresh(delay = 0) {
+      await wait(delay);
       await this.fetchToken();
       await this.fetchHolders();
     },
     async fetchToken() {
       try {
-        const result = await this.$rpc.get_table_rows({
-          code: HARDCODED_CONTRACT_NAME,
-          table: "stat",
-          scope: this.$route.params.id
-        });
-
+        const result = await this.$eos.getTable("stat", this.$route.params.id);
         const { supply, max_supply, issuer, totaldividends } = result.rows[0];
-        console.log({ supply, max_supply, issuer, totaldividends });
         this.supply = supply;
         this.max_supply = max_supply;
         this.issuer = issuer;
@@ -381,14 +302,6 @@ export default {
       } catch (e) {
         console.log("Error", e);
       }
-    },
-    isEosioName(input) {
-      return (
-        new RegExp("^[a-z][a-z1-5.]{0,10}([a-z1-5]|^.)[a-j1-5]?$").test(
-          input
-        ) ||
-        "Name must only contain characters a-z 1-5 and . No greater than 12 in length."
-      );
     },
     isNotEmpty(input) {
       return input.length !== 0 || "Cannot be empty";

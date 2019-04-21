@@ -1348,7 +1348,7 @@ babel-polyfill@^6.26.0:
     core-js "^2.5.0"
     regenerator-runtime "^0.10.5"
 
-babel-runtime@^6.26.0:
+babel-runtime@6.26.0, babel-runtime@^6.26.0:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
   integrity sha1-llxwWGaOgrVde/4E/yM3vItWR/4=
@@ -2694,14 +2694,14 @@ eosjs@20.0.0-beta2:
     eosjs-ecc "^4.0.1"
     text-encoding "^0.6.4"
 
-eosjs@^20.0.0-beta3:
-  version "20.0.0-beta3"
-  resolved "https://registry.yarnpkg.com/eosjs/-/eosjs-20.0.0-beta3.tgz#b5a078d4627ad63343bae6897ea5952d2d4fd26d"
-  integrity sha512-Fr3zRFlEs1sLMGxIIsck0U4BnWlfivz8xf0Es4nT0pgWlGTiufrtmeyJvnjjspSPvyGxghZc+llcM3JI/1k9pw==
+eosjs@^20.0.0:
+  version "20.0.0"
+  resolved "https://registry.yarnpkg.com/eosjs/-/eosjs-20.0.0.tgz#43940abfe15cd191ce4027d60294036e914613e9"
+  integrity sha512-Ak9CPtZgCFayUmq43X3Nsn4v67lkLfSzEdTUfMk1XAWA5s4HRn7lBTeTeDCzJ/rggi+dZ170VeJwc5T3gPk4HQ==
   dependencies:
-    babel-runtime "^6.26.0"
-    eosjs-ecc "^4.0.1"
-    text-encoding "^0.6.4"
+    babel-runtime "6.26.0"
+    eosjs-ecc "4.0.4"
+    text-encoding "0.7.0"
 
 errno@^0.1.3, errno@~0.1.7:
   version "0.1.7"
@@ -6872,6 +6872,11 @@ terser@^3.16.1:
     source-map "~0.6.1"
     source-map-support "~0.5.10"
 
+text-encoding@0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/text-encoding/-/text-encoding-0.7.0.tgz#f895e836e45990624086601798ea98e8f36ee643"
+  integrity sha512-oJQ3f1hrOnbRLOcwKz0Liq2IcrvDeZRHXhd9RgLrsT+DjWY/nty1Hi7v3dtkaEYbPYe0mUoOfzRrMwfXXwgPUA==
+
 text-encoding@^0.6.4:
   version "0.6.4"
   resolved "https://registry.yarnpkg.com/text-encoding/-/text-encoding-0.6.4.tgz#e399a982257a276dae428bb92845cb71bdc26d19"
@@ -7011,10 +7016,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-ual-quasar-renderer@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/ual-quasar-renderer/-/ual-quasar-renderer-1.0.2.tgz#76b3d10440cde7b61095c0486b8929d4f3bbb306"
-  integrity sha512-Qz9UBNOHXDupptMhlBTLD/HwAUHy3GnF4aOKf+7Dd3UCzMHMC9hhKTmKurId5RzmTeMonLuqL/kkOZ5k+oKmxQ==
+ual-quasar-renderer@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/ual-quasar-renderer/-/ual-quasar-renderer-1.0.8.tgz#f7d2a6374ba5cf01fe77c797f814c319f65fa1e5"
+  integrity sha512-9+xlQpNpynCl28Wq8np385xs0e3eljm+3gsgRMXk0FNo/xN4bN6zyRtgueC1cKAdz2hlaew/VBPMVidSLOqkfw==
   dependencies:
     quasar "^1.0.0-beta.16"
     universal-authenticator-library "^0.1.0"
