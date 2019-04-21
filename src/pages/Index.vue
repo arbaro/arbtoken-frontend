@@ -1,5 +1,54 @@
 <template>
   <q-page padding>
+    <q-dialog v-model="tokenPrompt" persistent>
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Create new token</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            v-model="issuerField"
+            label="Issuer"
+            hint="Account which can mint new tokens"
+            :rules="[isEosioName]"
+            :lazy-rules="true"
+            placeholder="Issuer account"
+            error-message="Must be a valid EOS account name"
+            autofocus
+            @keyup.enter="prompt = false"
+          />
+        </q-card-section>
+        <q-card-section>
+          <q-input v-model="symbolField" label="Symbol" placeholder="BTC" />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            v-model="maxSupplyField"
+            hint="Hard limit of token"
+            :lazy-rules="true"
+            type="number"
+            :suffix="this.symbolField"
+            label="Max Supply"
+          />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            v-model="precisionField"
+            :rules="[isPrecision]"
+            hint="Amount of zeros after decimal, 4 is recommended"
+            type="number"
+            label="Precision"
+          />
+        </q-card-section>
+        <q-card-section> Live Example: {{ draftedToken }} </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat label="Create Token" @click="createToken" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <div class="row q-col-gutter-xl">
       <div class="col-xs-12 col-sm-6 col-md-3">
         <q-card class="my-card bg-primary text-white col">
@@ -47,6 +96,14 @@
         </q-list>
       </div>
     </div>
+
+    <q-page-sticky
+      v-if="$eos.data.authed"
+      position="bottom-right"
+      :offset="[18, 18]"
+    >
+      <q-btn fab icon="add" color="primary" @click="initPrompt" />
+    </q-page-sticky>
   </q-page>
 </template>
 
@@ -61,13 +118,36 @@ export default {
     return {
       about: "Create your own token on EOS with Dividend functionality.",
       tokens: [],
-      trackedTokens: ["EUF", "VBM"]
+      trackedTokens: ["EUF", "VBM", "BTC"],
+      tokenPrompt: false,
+      issuerField: "",
+      symbolField: "",
+      precisionField: 4,
+      maxSupplyField: ""
     };
   },
   created: async function() {
     await this.fetchTokens();
   },
+  computed: {
+    draftedToken: function() {
+      return `${Number(this.maxSupplyField).toFixed(this.precisionField)} ${
+        this.symbolField
+      }`;
+    }
+  },
   methods: {
+    isPrecision() {
+      return this.precisionField >= 0 && this.precisionField <= 8;
+    },
+    isEosioName(input) {
+      return (
+        new RegExp("^[a-z][a-z1-5.]{0,10}([a-z1-5]|^.)[a-j1-5]?$").test(
+          input
+        ) ||
+        "Name must only contain characters a-z 1-5 and . No greater than 12 in length."
+      );
+    },
     async refresh() {
       await this.fetchTokens();
     },
@@ -90,6 +170,36 @@ export default {
           console.log("Error", e);
         }
       }
+    },
+    async initPrompt() {
+      if (this.issuerField == "" && this.$eos.data.accountName) {
+        this.issuerField = this.$eos.data.accountName;
+      }
+      this.tokenPrompt = true;
+    },
+    async createToken() {
+      console.log("trying", {
+        issuer: this.issuerField,
+        max_supply: this.draftedToken
+      });
+      await this.$eos.tx({
+        actions: [
+          {
+            account: HARDCODED_CONTRACT_NAME,
+            name: "create",
+            authorization: [
+              {
+                actor: this.$eos.data.accountName,
+                permission: "active"
+              }
+            ],
+            data: {
+              issuer: this.issuerField,
+              maximum_supply: this.draftedToken
+            }
+          }
+        ]
+      });
     }
   }
 };
