@@ -127,9 +127,23 @@
               @click="issuePrompt = true"
               >Issue</q-btn
             >
-            <q-btn flat @click="transferPrompt = true">Transfer</q-btn>
-            <q-btn flat @click="dividendPrompt = true">Issue Dividend</q-btn>
-            <q-btn flat v-if="claimsAvailable" @click="bulkClaim"
+            <q-btn
+              :disable="!$eosio.data.authed"
+              flat
+              @click="transferPrompt = true"
+              >Transfer</q-btn
+            >
+            <q-btn
+              :disable="!$eosio.data.authed"
+              flat
+              @click="dividendPrompt = true"
+              >Issue Dividend</q-btn
+            >
+            <q-btn
+              :disable="!$eosio.data.authed"
+              flat
+              v-if="claimsAvailable"
+              @click="bulkClaim"
               >Bulk Claim</q-btn
             >
 
@@ -152,6 +166,7 @@
                 v-if="balance.lastclaim !== totaldividends"
                 color="primary"
                 flat
+                :disable="!$eosio.data.authed"
                 @click="claim(balance.holder)"
                 >Claim {{ balance.awaitingReward }}</q-btn
               >
@@ -190,7 +205,7 @@ export default {
   data: function() {
     return {
       about: "Create your own token on EOS with Dividend functionality.",
-      knownHolders: ["test1", "test2", "test3"],
+      knownHolders: [],
       balances: [],
       supply: null,
       max_supply: null,
@@ -210,6 +225,7 @@ export default {
   },
   created: async function() {
     await this.fetchToken();
+    await this.fetchTrackableHolders();
     await this.fetchHolders();
   },
   computed: {
@@ -221,6 +237,24 @@ export default {
     }
   },
   methods: {
+    async fetchTrackableHolders() {
+      const result = await this.$rpc.get_table_by_scope({
+        code: HARDCODED_CONTRACT_NAME,
+        table: "accounts"
+      });
+      const accounts = result.rows.map(x => x.scope);
+      this.knownHolders = [];
+      for (var i = 0; i < accounts.length; i++) {
+        const balance = await this.$eos.getBalance(
+          accounts[i],
+          this.$route.params.id,
+          HARDCODED_CONTRACT_NAME
+        );
+        if (balance) {
+          this.knownHolders = [...this.knownHolders, accounts[i]];
+        }
+      }
+    },
     async issue() {
       await this.$eos.tx("issue", {
         to: this.issueRecipient,
@@ -323,7 +357,7 @@ export default {
           const balanceObj = result.rows.filter(
             x => x.balance.split(" ")[1] == this.$route.params.id
           )[0];
-
+          if (!balanceObj) return;
           this.balances = [
             ...this.balances,
             {

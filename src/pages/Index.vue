@@ -64,7 +64,9 @@
 
           <q-card-actions>
             <q-btn flat @click="aboutPrompt = true">About</q-btn>
-            <q-btn flat @click="donateTrigger">Donate</q-btn>
+            <q-btn :disable="!$eosio.data.authed" flat @click="donateTrigger"
+              >Donate</q-btn
+            >
             <q-btn flat @click="refresh">Refresh</q-btn>
           </q-card-actions>
         </q-card>
