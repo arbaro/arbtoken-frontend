@@ -353,24 +353,41 @@ export default {
             table: "accounts",
             scope: holders[i]
           });
+          console.log(result.rows, holders[i]);
 
           const balanceObj = result.rows.filter(
-            x => x.balance.split(" ")[1] == this.$route.params.id
+            balance =>
+              parseTokenString(balance.balance).symbol == this.$route.params.id
           )[0];
+
+          console.log(balanceObj);
+
           if (!balanceObj) return;
-          this.balances = [
-            ...this.balances,
-            {
-              ...balanceObj,
-              holder: holders[i],
-              awaitingReward: `${calcExpectedReward(
-                parseTokenString(balanceObj.balance).amount,
-                parseTokenString(balanceObj.lastclaim).amount,
-                parseTokenString(this.supply).amount,
-                parseTokenString(this.totaldividends).amount
-              )} EOS`
-            }
-          ];
+          if (!balanceObj.hasOwnProperty("lastclaim")) {
+            this.$q.notify("This token is outdated.");
+            this.balances = [
+              ...this.balances,
+              {
+                ...balanceObj,
+                holder: holders[i]
+              }
+            ];
+            console.log("all good");
+          } else {
+            this.balances = [
+              ...this.balances,
+              {
+                ...balanceObj,
+                holder: holders[i],
+                awaitingReward: `${calcExpectedReward(
+                  parseTokenString(balanceObj.balance).amount,
+                  parseTokenString(balanceObj.lastclaim).amount,
+                  parseTokenString(this.supply).amount,
+                  parseTokenString(this.totaldividends).amount
+                )} EOS`
+              }
+            ];
+          }
         }
       } catch (e) {
         console.log("Error in token detail", e);
