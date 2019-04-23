@@ -323,6 +323,7 @@ export default {
     async refresh(delay = 0) {
       await wait(delay);
       await this.fetchToken();
+      await this.fetchTrackableHolders();
       await this.fetchHolders();
     },
     async fetchToken() {
