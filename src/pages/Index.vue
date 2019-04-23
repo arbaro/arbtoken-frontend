@@ -1,5 +1,27 @@
 <template>
   <q-page padding>
+    <q-dialog v-model="donationPrompt" persistent>
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Make a donation</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            v-model="donationAmount"
+            :rules="[isNotEmpty, isOverZero]"
+            :lazy-rules="true"
+            type="number"
+            suffix="EOS"
+            label="Donation Amount"
+          />
+        </q-card-section>
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat label="Donate" @click="donateTrigger" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <q-dialog v-model="tokenPrompt" persistent>
       <q-card style="min-width: 400px">
         <q-card-section>
@@ -64,7 +86,10 @@
 
           <q-card-actions>
             <q-btn flat @click="aboutPrompt = true">About</q-btn>
-            <q-btn :disable="!$eosio.data.authed" flat @click="donateTrigger"
+            <q-btn
+              :disable="!$eosio.data.authed"
+              flat
+              @click="donationPrompt = true"
               >Donate</q-btn
             >
             <q-btn flat @click="refresh">Refresh</q-btn>
@@ -122,6 +147,8 @@ export default {
       tokens: [],
       trackedTokens: [],
       tokenPrompt: false,
+      donationPrompt: false,
+      donationAmount: null,
       issuerField: "",
       symbolField: "",
       precisionField: 4,
@@ -142,7 +169,11 @@ export default {
   },
   methods: {
     async donateTrigger() {
-      await this.$eos.transfer("arbarotokenn", "1.0000 EOS", "TOK:4");
+      await this.$eos.transfer(
+        "arbarotokenn",
+        `${Number(this.donationAmount).toFixed(4)} EOS`,
+        "TOK:4"
+      );
     },
     isPrecision() {
       return this.precisionField >= 0 && this.precisionField <= 8;
