@@ -295,6 +295,7 @@ export default {
           owner,
           tokensym: `4,${this.$route.params.id}`
         });
+        await wait(1000);
         const afterBalance = await this.$eos.getBalance(owner);
         const difference = (afterBalance - beforeBalance).toFixed(4);
 
