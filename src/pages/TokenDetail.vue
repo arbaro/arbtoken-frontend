@@ -186,7 +186,6 @@
 
 <script>
 import wait from "waait";
-const HARDCODED_CONTRACT_NAME = "arbtoken";
 
 const calcExpectedReward = (balance, lastclaim, supply, totaldividends) => {
   const percent = balance / supply;
@@ -239,7 +238,7 @@ export default {
   methods: {
     async fetchTrackableHolders() {
       const result = await this.$rpc.get_table_by_scope({
-        code: HARDCODED_CONTRACT_NAME,
+        code: process.env.CONTRACT,
         table: "accounts"
       });
       const accounts = result.rows.map(x => x.scope);
@@ -248,7 +247,7 @@ export default {
         const balance = await this.$eos.getBalance(
           accounts[i],
           this.$route.params.id,
-          HARDCODED_CONTRACT_NAME
+          process.env.CONTRACT
         );
         if (balance) {
           this.knownHolders = [...this.knownHolders, accounts[i]];
@@ -271,7 +270,7 @@ export default {
           this.recipient,
           `${Number(this.transferAmount).toFixed(4)} ${this.$route.params.id}`,
           this.memo,
-          HARDCODED_CONTRACT_NAME
+          process.env.CONTRACT
         );
       } catch (e) {
         console.log("s");
@@ -280,7 +279,7 @@ export default {
     async issueDividend() {
       try {
         await this.$eos.transfer(
-          HARDCODED_CONTRACT_NAME,
+          process.env.CONTRACT,
           `${Number(this.dividendAmount).toFixed(4)} EOS`,
           `${this.$route.params.id}:4`
         );
@@ -350,7 +349,7 @@ export default {
       try {
         for (var i = 0; i < holders.length; i++) {
           const result = await this.$rpc.get_table_rows({
-            code: HARDCODED_CONTRACT_NAME,
+            code: process.env.CONTRACT,
             table: "accounts",
             scope: holders[i]
           });

@@ -5,11 +5,8 @@ import { Scatter } from "ual-scatter";
 
 import Eos from "ual-quasar-renderer";
 
-const CHAIN_ID =
-  "cf057bbfb72640471fd910bcb67639c22df9f92470936cddc1ade0e2f2e7dc4f";
-const PROTOCOL = "http";
-const HOST = "localhost";
-const PORT = 8888;
+const { CHAIN_ID, PROTOCOL, HOST, PORT, CONTRACT } = process.env;
+console.log({ CHAIN_ID, PROTOCOL, HOST, PORT, CONTRACT });
 
 const myChain = {
   chainId: CHAIN_ID,
@@ -37,7 +34,7 @@ export default ({ Vue }) => {
       openURL
     ),
     extras: {
-      defaultContract: "arbtoken"
+      defaultContract: CONTRACT
     }
   });
 

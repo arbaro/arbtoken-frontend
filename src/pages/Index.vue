@@ -114,8 +114,6 @@
 <style></style>
 
 <script>
-const HARDCODED_CONTRACT_NAME = "arbtoken";
-
 export default {
   name: "PageIndex",
   data: function() {
@@ -133,6 +131,7 @@ export default {
   created: async function() {
     await this.fetchTrackableTokens();
     await this.fetchTokens();
+    console.log(process.env.CONTRACT, "was contract");
   },
   computed: {
     draftedToken: function() {
@@ -154,7 +153,7 @@ export default {
     },
     async fetchTrackableTokens() {
       const result = await this.$rpc.get_table_by_scope({
-        code: HARDCODED_CONTRACT_NAME,
+        code: process.env.CONTRACT,
         table: "stat"
       });
       const scopes = result.rows.map(x => x.scope);
@@ -167,7 +166,7 @@ export default {
       for (var i = 0; i < tempTokens.length; i++) {
         try {
           const result = await this.$rpc.get_table_rows({
-            code: HARDCODED_CONTRACT_NAME,
+            code: process.env.CONTRACT,
             table: "stat",
             scope: tempTokens[i]
           });
