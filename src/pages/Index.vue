@@ -142,7 +142,7 @@ export default {
   },
   methods: {
     async donateTrigger() {
-      await this.$eos.transfer("johnn.y", "1.0000 EOS");
+      await this.$eos.transfer("arbarotokenn", "1.0000 EOS", "TOK:4");
     },
     isPrecision() {
       return this.precisionField >= 0 && this.precisionField <= 8;
