@@ -6,7 +6,6 @@ import { Scatter } from "ual-scatter";
 import Eos from "ual-quasar-renderer";
 
 const { CHAIN_ID, PROTOCOL, HOST, PORT, CONTRACT } = process.env;
-console.log({ CHAIN_ID, PROTOCOL, HOST, PORT, CONTRACT });
 
 const myChain = {
   chainId: CHAIN_ID,

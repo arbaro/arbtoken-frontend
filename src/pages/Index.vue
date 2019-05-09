@@ -53,7 +53,7 @@
             label="Max Supply"
           />
         </q-card-section>
-        <q-card-section>
+        <!-- <q-card-section>
           <q-input
             v-model="precisionField"
             :rules="[isPrecision]"
@@ -61,7 +61,7 @@
             type="number"
             label="Precision"
           />
-        </q-card-section>
+        </q-card-section> -->
         <q-card-section> Live Example: {{ draftedToken }} </q-card-section>
 
         <q-card-actions align="right" class="text-primary">
